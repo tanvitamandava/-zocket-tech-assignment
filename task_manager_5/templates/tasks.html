@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            background-color: olive;
+            text-align: center;
+        }
+
+        h1 {
+            color: rgb(243, 243, 186);
+        }
+
+        .logo {
+            display: block;
+            margin: 0 auto;
+            width: 100px;
+            height: auto;
+        }
+
+        .form-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgb(243, 243, 186);
+            padding: 15px;
+            border-radius: 5px;
+        }
+
+        form {
+            display: inline-block;
+        }
+
+        label {
+            font-weight: bold;
+            color: black;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        input {
+            width: 200px;
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            background: linear-gradient(to right, rgb(207, 207, 81), rgb(243, 243, 186));
+            color: black;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s ease-in-out;
+        }
+
+        button:hover {
+            background: linear-gradient(to right, rgb(243, 243, 186), rgb(207, 207, 81));
+        }
+
+        .input-group button {
+            font-size: 20px;
+            padding: 5px 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: black;
+            transition: color 0.3s ease-in-out;
+        }
+
+        .input-group button:hover {
+            color: white;
+        }
+
+        .task-container {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background: olive;
+            border-radius: 5px;
+            text-align: left;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .task-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .task-list li {
+            background: rgb(243, 243, 186);
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .task-btn {
+            padding: 5px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            margin-left: 5px;
+        }
+
+        .done-btn, .edit-btn, .delete-btn {
+            background-color: #f7f4b8;
+            color: black;
+        }
+
+        .done {
+            text-decoration: line-through;
+            color: black;
+        }
+
+        .logout {
+            background-color: black;
+            color: white;
+            padding: 10px 15px;
+            text-decoration: none;
+            display: inline-block;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .logout:hover {
+            background-color: #333;
+        }
+
+        .datetime {
+            color: #f7f4b8;
+            font-weight: bold;
+        }
+    </style>
+
+    <script>
+        function addTaskByVoice() {
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = 'en-US';
+            recognition.start();
+
+            recognition.onresult = function(event) {
+                const taskText = event.results[0][0].transcript;
+                document.getElementById('task_name').value = taskText;
+            };
+
+            recognition.onerror = function(event) {
+                alert("Voice recognition failed. Try again.");
+            };
+        }
+
+        function speakTask(taskText) {
+            let speech = new SpeechSynthesisUtterance(taskText);
+            speech.lang = 'en-US';
+            window.speechSynthesis.speak(speech);
+        }
+
+        function announceTaskAdded() {
+            const taskInput = document.getElementById('task_name');
+            if (taskInput.value.trim() !== '') {
+                speakTask("Task " + taskInput.value + " added.");
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Task Manager</h1>
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="Task Manager Logo" class="logo">
+    
+    <p class="datetime">Current Date and Time: <strong>{{ current_datetime }}</strong></p>
+
+    <div class="form-container">
+        <form action="{{ url_for('tasks') }}" method="POST" onsubmit="announceTaskAdded()">
+            <h2>Add a New Task</h2>
+            <div class="input-group">
+                <button type="button" onclick="addTaskByVoice()">🎤︎</button>
+                <input type="text" id="task_name" name="task_name" placeholder="Enter task" required>
+            </div>
+            <button type="submit">Add Task</button>
+        </form>
+
+        <form action="{{ url_for('search') }}" method="GET">
+            <h2>Search Tasks</h2>
+            <div class="input-group">
+                <button type="submit">⌕</button>
+                <input type="text" name="search_term" placeholder="Search tasks">
+            </div>
+        </form>
+    </div>
+
+    <h2>Your Tasks</h2>
+    <div class="task-container">
+        <ul class="task-list">
+            {% for task in tasks %}
+                <li class="{% if task.done %}done{% endif %}">
+                    {{ task.name }}
+                    <div>
+                        {% if not task.done %}
+                            <a href="{{ url_for('mark_done', task_id=task.id) }}" class="task-btn done-btn">✔</a>
+                        {% endif %}
+                        <a href="{{ url_for('edit_task', task_id=task.id) }}" class="task-btn edit-btn">✎</a>
+                        <a href="{{ url_for('delete_task', task_id=task.id) }}" class="task-btn delete-btn">☓</a>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <br>
+    <a href="{{ url_for('logout') }}" class="logout">Logout</a>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: olive;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background: rgb(243, 243, 186);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        h1 {
+            color: black;
+            margin-bottom: 15px;
+        }
+
+        .logo {
+            display: block;
+            margin: 0 auto 15px;
+            width: 80px;
+            height: auto;
+        }
+
+        h2 {
+            color: black;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .task-container {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background: olive;
+            border-radius: 5px;
+            text-align: left;
+        }
+
+        .task-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .task-list li {
+            background: rgb(243, 243, 186);
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .done {
+            text-decoration: line-through;
+            color: black;
+        }
+
+        .btn {
+            background-color: #f7f4b8;
+            color: black;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: 0.3s;
+            text-decoration: none;
+            display: block;
+            width: 100%;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background-color: #f2eb98;
+        }
+
+        .center-btn {
+            display: flex;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .voice-btn {
+            background-color: #f7f4b8;
+            color: black;
+            padding: 5px 10px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .voice-btn:hover {
+            background-color: #f2eb98;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Search Task</h1>
+
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Task Manager Logo" class="logo">
+
+        <h2>Search Results</h2>
+
+        {% if tasks %}
+            <ul class="task-list">
+                {% for task in tasks %}
+                    <li id="task_{{ task.id }}" class="{% if task.done %}done{% endif %}">
+                        {{ task.name }}
+                        {% if task.done %}
+                            (Done)
+                            <script>
+                                setTimeout(() => {
+                                    const speech = new SpeechSynthesisUtterance("Task {{ task.name }} is done");
+                                    speech.lang = 'en-US';
+                                    speechSynthesis.speak(speech);
+                                }, 500);
+                            </script>
+                        {% else %}
+                            (Not Done)
+                            <script>
+                                setTimeout(() => {
+                                    const speech = new SpeechSynthesisUtterance("Task {{ task.name }} is not done");
+                                    speech.lang = 'en-US';
+                                    speechSynthesis.speak(speech);
+                                }, 500);
+                            </script>
+                            <a href="{{ url_for('mark_done', task_id=task.id) }}" class="voice-btn">Mark as Done</a>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No tasks found.</p>
+            <script>
+                setTimeout(() => {
+                    const speech = new SpeechSynthesisUtterance("No tasks found");
+                    speech.lang = 'en-US';
+                    speechSynthesis.speak(speech);
+                }, 500);
+            </script>
+        {% endif %}
+
+        <div class="center-btn">
+            <a href="{{ url_for('tasks') }}" class="btn"> ← Back to Task List</a>
+        </div>
+    </div>
+
+</body>
+</html>
